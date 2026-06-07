@@ -29,7 +29,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('categories', CategoryController::class)->middleware('permission:manage categories');
 
     // Products (hanya admin)
-    Route::resource('products', ProductController::class)->middleware('permission:manage products');
+    Route::resource('products', ProductController::class)->except(['show'])->middleware('permission:manage products');
     Route::get('/products/search', [ProductController::class, 'search'])->name('products.search')->middleware('auth');
 
     // Tables (hanya admin)

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('table_number')->unique();
             $table->integer('capacity')->default(4);
-            $table->enum('status', ['tersedia', 'terisi', 'dibooking'])->default('tersedia');
+            $table->enum('status', ['available', 'occupied', 'reserved'])->default('available');
             $table->timestamps();
         });
     }
