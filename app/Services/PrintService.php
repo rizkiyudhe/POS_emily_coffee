@@ -32,15 +32,16 @@ class PrintService
         }
     }
 
-    public function printReceipt(Transaction $transaction)
+    // 1. Cetak untuk KONSUMEN (lengkap harga, total, kembalian)
+    public function printReceiptCustomer(Transaction $transaction)
     {
         if (!$this->printer) return false;
         try {
             $this->printer->initialize();
             $this->printer->setJustification(Printer::JUSTIFY_CENTER);
-            $this->printer->text("Emily Coffe\n");
-            $this->printer->text("Jl. Padang\n");
-            $this->printer->text("Telp: 087716773689\n");
+            $this->printer->text("COFFEE SHOP POS\n");
+            $this->printer->text("Jl. Contoh No. 123\n");
+            $this->printer->text("Telp: 08123456789\n");
             $this->printer->text("==============================\n");
             $this->printer->setJustification(Printer::JUSTIFY_LEFT);
             $this->printer->text("Invoice: {$transaction->invoice_number}\n");
@@ -66,24 +67,61 @@ class PrintService
             $this->printer->close();
             return true;
         } catch (\Exception $e) {
-            Log::error('Print receipt error: ' . $e->getMessage());
+            Log::error('Print customer receipt error: ' . $e->getMessage());
             return false;
         }
     }
 
-    public function printKOT(Transaction $transaction)
+    // 2. Cetak untuk CHECKER (tanpa harga, hanya nama item & quantity)
+    public function printChecker(Transaction $transaction)
     {
         if (!$this->printer) return false;
         try {
             $this->printer->initialize();
             $this->printer->setJustification(Printer::JUSTIFY_CENTER);
-            $this->printer->text("=== KITCHEN ORDER TICKET ===\n");
+            $this->printer->text("=== CHECKER COPY ===\n");
+            $this->printer->setJustification(Printer::JUSTIFY_LEFT);
+            $this->printer->text("Queue: {$transaction->queue_number}\n");
+            $this->printer->text("Table: " . ($transaction->table->table_number ?? 'Take Away') . "\n");
+            $this->printer->text("Date: " . now()->format('d/m/Y H:i') . "\n");
+            $this->printer->text("----------------------------\n");
+            foreach ($transaction->items as $item) {
+                $this->printer->text($item->quantity . "x " . $item->product->name . "\n");
+            }
+            $this->printer->text("----------------------------\n");
+            $this->printer->text("Server: " . $transaction->cashier->name . "\n");
+            $this->printer->feed(2);
+            $this->printer->cut();
+            $this->printer->close();
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Print checker error: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    // 3. Cetak untuk DAPUR (hanya item makanan, tanpa harga)
+    public function printKitchen(Transaction $transaction)
+    {
+        if (!$this->printer) return false;
+        // Filter item dengan kategori makanan (misal category_id = 1)
+        $foodItems = $transaction->items->filter(function ($item) {
+            return $item->product->category_id === 1; // Sesuaikan ID kategori makanan
+        });
+        if ($foodItems->isEmpty()) {
+            \Log::info('No food items, kitchen print skipped.');
+            return true; // tidak perlu cetak
+        }
+        try {
+            $this->printer->initialize();
+            $this->printer->setJustification(Printer::JUSTIFY_CENTER);
+            $this->printer->text("=== KITCHEN ORDER ===\n");
             $this->printer->setJustification(Printer::JUSTIFY_LEFT);
             $this->printer->text("Queue: {$transaction->queue_number}\n");
             $this->printer->text("Table: " . ($transaction->table->table_number ?? 'Take Away') . "\n");
             $this->printer->text("DateTime: " . now()->format('d/m/Y H:i') . "\n");
             $this->printer->text("----------------------------\n");
-            foreach ($transaction->items as $item) {
+            foreach ($foodItems as $item) {
                 $this->printer->text($item->quantity . "x " . $item->product->name . "\n");
             }
             $this->printer->text("----------------------------\n");
@@ -92,8 +130,16 @@ class PrintService
             $this->printer->close();
             return true;
         } catch (\Exception $e) {
-            Log::error('Print KOT error: ' . $e->getMessage());
+            \Log::error('Print kitchen error: ' . $e->getMessage());
             return false;
+        }
+    }
+
+    // Opsional: method close jika printer tidak digunakan lagi
+    public function close()
+    {
+        if ($this->printer) {
+            $this->printer->close();
         }
     }
 }

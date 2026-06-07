@@ -51,7 +51,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/receipt/{transaction}', [TransactionController::class, 'receipt'])->name('receipt')->middleware('permission:view transactions');
         Route::post('/reprint-receipt/{transaction}', [TransactionController::class, 'reprintReceipt'])->name('reprint-receipt')->middleware('permission:reprint receipt');
         Route::post('/reprint-kot/{transaction}', [TransactionController::class, 'reprintKOT'])->name('reprint-kot')->middleware('permission:reprint kot');
+        Route::get('/transactions/receipt/{transaction}', [TransactionController::class, 'receipt'])->name('transactions.receipt');
     });
+
+    Route::post('/transactions/reprint-customer/{transaction}', [TransactionController::class, 'reprintCustomer'])->name('transactions.reprint-customer');
+    Route::post('/transactions/reprint-checker/{transaction}', [TransactionController::class, 'reprintChecker'])->name('transactions.reprint-checker');
+    Route::post('/transactions/reprint-kitchen/{transaction}', [TransactionController::class, 'reprintKitchen'])->name('transactions.reprint-kitchen');
 
     // Reports (hanya admin)
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index')->middleware('permission:view reports');

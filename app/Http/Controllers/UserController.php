@@ -8,10 +8,7 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('permission:manage users');
-    }
+
 
     public function index()
     {
