@@ -32,7 +32,7 @@ class PrintService
         }
     }
 
-    // 1. Cetak untuk KONSUMEN (lengkap harga, total, kembalian)
+    // 1. Cetak untuk KONSUMEN (lengkap harga, total, kembalian, diskon, pajak, service)
     public function printReceiptCustomer(Transaction $transaction)
     {
         if (!$this->printer) return false;
@@ -55,6 +55,18 @@ class PrintService
                 $this->printer->text("  {$item->quantity} x " . number_format($item->price) . " = " . number_format($item->subtotal) . "\n");
             }
             $this->printer->text("----------------------------\n");
+
+            // ✅ Tambahkan diskon, pajak, service charge (jika ada)
+            if ($transaction->discount_amount > 0) {
+                $this->printer->text("Diskon: " . number_format($transaction->discount_amount) . "\n");
+            }
+            if ($transaction->tax_amount > 0) {
+                $this->printer->text("Pajak: " . number_format($transaction->tax_amount) . "\n");
+            }
+            if ($transaction->service_amount > 0) {
+                $this->printer->text("Service: " . number_format($transaction->service_amount) . "\n");
+            }
+
             $this->printer->text("Total: " . number_format($transaction->total_amount) . "\n");
             $this->printer->text("Paid: " . number_format($transaction->paid_amount) . "\n");
             $this->printer->text("Change: " . number_format($transaction->change_amount) . "\n");
@@ -109,7 +121,7 @@ class PrintService
             return $item->product->category_id === 1; // Sesuaikan ID kategori makanan
         });
         if ($foodItems->isEmpty()) {
-            \Log::info('No food items, kitchen print skipped.');
+            Log::info('No food items, kitchen print skipped.');
             return true; // tidak perlu cetak
         }
         try {
@@ -123,6 +135,10 @@ class PrintService
             $this->printer->text("----------------------------\n");
             foreach ($foodItems as $item) {
                 $this->printer->text($item->quantity . "x " . $item->product->name . "\n");
+                if ($item->notes) {
+                    $this->printer->text(" (Catatan: {$item->notes})");
+                }
+                $this->printer->text("\n");
             }
             $this->printer->text("----------------------------\n");
             $this->printer->feed(2);
@@ -130,7 +146,7 @@ class PrintService
             $this->printer->close();
             return true;
         } catch (\Exception $e) {
-            \Log::error('Print kitchen error: ' . $e->getMessage());
+            Log::error('Print kitchen error: ' . $e->getMessage());
             return false;
         }
     }

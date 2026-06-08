@@ -25,7 +25,9 @@ class RolePermissionSeeder extends Seeder
             'create transactions',
             'view transactions',
             'reprint receipt',
-            'reprint kot'
+            'reprint kot',
+            'manage settings',
+            'void transactions'
         ];
         foreach ($permissions as $perm) {
             Permission::firstOrCreate(['name' => $perm]);

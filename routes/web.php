@@ -9,6 +9,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\SettingController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -51,7 +52,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/receipt/{transaction}', [TransactionController::class, 'receipt'])->name('receipt')->middleware('permission:view transactions');
         Route::post('/reprint-receipt/{transaction}', [TransactionController::class, 'reprintReceipt'])->name('reprint-receipt')->middleware('permission:reprint receipt');
         Route::post('/reprint-kot/{transaction}', [TransactionController::class, 'reprintKOT'])->name('reprint-kot')->middleware('permission:reprint kot');
-        Route::get('/transactions/receipt/{transaction}', [TransactionController::class, 'receipt'])->name('transactions.receipt');
+        // ❌ HAPUS baris ini:
+        // Route::get('/transactions/receipt/{transaction}', [TransactionController::class, 'receipt'])->name('transactions.receipt');
+
+        Route::post('/{transaction}/void', [TransactionController::class, 'void'])->name('void');
     });
 
     Route::post('/transactions/reprint-customer/{transaction}', [TransactionController::class, 'reprintCustomer'])->name('transactions.reprint-customer');
@@ -64,6 +68,9 @@ Route::middleware(['auth'])->group(function () {
 
     // Activity Logs (hanya admin)
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index')->middleware('permission:view logs');
+
+    Route::get('/settings', [SettingController::class, 'index'])->name('settings.index')->middleware('permission:manage settings');
+    Route::post('/settings', [SettingController::class, 'update'])->name('settings.update')->middleware('permission:manage settings');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

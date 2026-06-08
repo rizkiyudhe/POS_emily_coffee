@@ -11,6 +11,8 @@ use App\Services\CartService;
 use App\Helpers\TransactionHelper;
 use App\Services\PrintService;
 use Illuminate\Http\Request;
+use App\Helpers\TransactionCalculator;
+use App\Models\StoreSetting;
 
 class TransactionController extends Controller
 {
@@ -104,67 +106,130 @@ class TransactionController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'table_id' => 'nullable|exists:tables,id',
-            'payment_method' => 'required|in:cash,qris,debit',
-            'paid_amount' => 'required|integer|min:0'
+            'table_id'         => 'nullable|exists:tables,id',
+            'order_type'       => 'required|in:dine_in,takeaway',
+            'payment_method'   => 'required|in:cash,qris,debit',
+            'paid_amount'      => 'required|integer|min:0',
+            'discount_type'    => 'nullable|in:nominal,percentage',
+            'discount_value'   => 'nullable|integer|min:0',
+            'notes'            => 'nullable|string',
         ]);
+
         $cart = $this->cart->getCart();
         if (empty($cart)) {
             return response()->json(['success' => false, 'message' => 'Cart kosong!'], 400);
         }
-        $total = $this->cart->getTotal();
+
+        $subtotal = $this->cart->getTotal();
+        $discountType = $request->discount_type;
+        $discountValue = $request->discount_value ?? 0;
+
+        // Ambil konfigurasi pajak dan service dari database (default jika belum ada)
+        $taxPercentage = (float) StoreSetting::get('tax_percentage', 11);
+        $servicePercentage = (float) StoreSetting::get('service_percentage', 5);
+        $enableTax = StoreSetting::get('enable_tax', true);
+        $enableService = StoreSetting::get('enable_service', true);
+
+        $tax = $enableTax ? $taxPercentage : 0;
+        $service = $enableService ? $servicePercentage : 0;
+
+        $calc = TransactionCalculator::calculate($subtotal, $discountType, $discountValue, $tax, $service);
+        $grandTotal = $calc['grand_total'];
+
         $paid = $request->paid_amount;
-        if ($paid < $total) {
+        if ($paid < $grandTotal) {
             return response()->json(['success' => false, 'message' => 'Pembayaran kurang!'], 400);
         }
 
         $transaction = Transaction::create([
-            'invoice_number' => TransactionHelper::generateInvoiceNumber(),
-            'queue_number' => TransactionHelper::generateQueueNumber(),
-            'table_id' => $request->table_id,
-            'user_id' => auth()->id(),
-            'total_amount' => $total,
-            'paid_amount' => $paid,
-            'change_amount' => $paid - $total,
-            'payment_method' => $request->payment_method,
-            'status' => 'completed',
-            'transaction_date' => now()
+            'invoice_number'     => TransactionHelper::generateInvoiceNumber(),
+            'queue_number'       => TransactionHelper::generateQueueNumber(),
+            'table_id'           => $request->table_id,
+            'order_type'         => $request->order_type,
+            'user_id'            => auth()->id(),
+            'total_amount'       => $grandTotal,
+            'paid_amount'        => $paid,
+            'change_amount'      => $paid - $grandTotal,
+            'payment_method'     => $request->payment_method,
+            'status'             => 'completed',
+            'transaction_date'   => now(),
+            'notes'              => $request->notes,
+            'discount_type'      => $discountType,
+            'discount_value'     => $discountValue,
+            'discount_amount'    => $calc['discount_amount'],
+            'tax_percentage'     => $tax,
+            'tax_amount'         => $calc['tax_amount'],
+            'service_percentage' => $service,
+            'service_amount'     => $calc['service_amount'],
         ]);
 
-        foreach ($cart as $item) {
+        foreach ($cart as $id => $item) {
             TransactionItem::create([
                 'transaction_id' => $transaction->id,
-                'product_id' => $item['product_id'],
-                'quantity' => $item['quantity'],
-                'price' => $item['price'],
-                'subtotal' => $item['subtotal']
+                'product_id'     => $id,
+                'quantity'       => $item['quantity'],
+                'price'          => $item['price'],
+                'subtotal'       => $item['subtotal'],
+                'notes'          => $item['notes'] ?? null,
             ]);
-            Product::find($item['product_id'])->decrement('stock', $item['quantity']);
+            Product::find($id)->decrement('stock', $item['quantity']);
         }
 
-        if ($request->table_id) {
+        if ($request->table_id && $request->order_type == 'dine_in') {
             Table::find($request->table_id)->update(['status' => 'occupied']);
         }
 
-        $printService = new PrintService();
+        // Cetak struk dan KOT
+        $printService = new \App\Services\PrintService();
         $printService->printReceiptCustomer($transaction);
         $printService->printChecker($transaction);
         $printService->printKitchen($transaction);
-        $printService->close();
 
         ActivityLog::create([
-            'user_id' => auth()->id(),
-            'action' => 'create transaction',
+            'user_id'     => auth()->id(),
+            'action'      => 'create transaction',
             'description' => "Transaksi {$transaction->invoice_number}",
-            'ip_address' => $request->ip()
+            'ip_address'  => $request->ip(),
         ]);
 
         $this->cart->clearCart();
 
-        return response()->json([
-            'success' => true,
-            'redirect' => route('transactions.receipt', $transaction)
+        return response()->json(['success' => true, 'redirect' => route('transactions.receipt', $transaction)]);
+    }
+
+    public function void(Transaction $transaction, Request $request)
+    {
+        // Manual permission check
+        if (!auth()->user()->hasPermissionTo('void transactions')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $request->validate(['reason' => 'required|string|min:3']);
+
+        if ($transaction->status === 'void') {
+            return back()->with('error', 'Transaksi sudah void.');
+        }
+
+        // Kembalikan stok
+        foreach ($transaction->items as $item) {
+            $item->product->increment('stock', $item->quantity);
+        }
+
+        $transaction->update([
+            'status'      => 'void',
+            'void_reason' => $request->reason,
+            'voided_by'   => auth()->id(),
+            'voided_at'   => now(),
         ]);
+
+        ActivityLog::create([
+            'user_id'     => auth()->id(),
+            'action'      => 'void transaction',
+            'description' => "Void transaksi {$transaction->invoice_number} dengan alasan: {$request->reason}",
+            'ip_address'  => $request->ip(),
+        ]);
+
+        return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil divoid.');
     }
 
     public function receipt(Transaction $transaction)

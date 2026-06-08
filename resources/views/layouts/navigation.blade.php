@@ -32,14 +32,21 @@
                     @can('view logs')
                         <x-nav-link :href="route('activity-logs.index')" :active="request()->routeIs('activity-logs.*')">Log Aktivitas</x-nav-link>
                     @endcan
+                    @can('manage settings')
+                        <x-nav-link :href="route('settings.index')" :active="request()->routeIs('settings.*')">
+                            {{ __('Pengaturan') }}
+                        </x-nav-link>
+                    @endcan
                 </div>
             </div>
             <div class="hidden sm:flex sm:items-center sm:ml-6">
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
-                        <button class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition">
+                        <button
+                            class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition">
                             <span class="inline-flex rounded-md">
-                                <span class="px-3 py-2 text-sm font-medium text-gray-700">{{ Auth::user()->name }}</span>
+                                <span
+                                    class="px-3 py-2 text-sm font-medium text-gray-700">{{ Auth::user()->name }}</span>
                             </span>
                         </button>
                     </x-slot>
@@ -47,7 +54,8 @@
                         <x-dropdown-link :href="route('profile.edit')">Profil</x-dropdown-link>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <x-dropdown-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">Logout</x-dropdown-link>
+                            <x-dropdown-link :href="route('logout')"
+                                onclick="event.preventDefault(); this.closest('form').submit();">Logout</x-dropdown-link>
                         </form>
                     </x-slot>
                 </x-dropdown>

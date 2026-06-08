@@ -68,6 +68,15 @@ class CartService
         session()->put($this->sessionKey, $cart);
     }
 
+    public function updateNote($productId, $note)
+    {
+        $cart = $this->getCart();
+        if (isset($cart[$productId])) {
+            $cart[$productId]['notes'] = $note;
+            session()->put($this->sessionKey, $cart);
+        }
+    }
+
     /**
      * Kosongkan keranjang
      */

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
+use App\Models\TransactionItem;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -75,5 +76,33 @@ class ReportController extends Controller
         }
 
         return view('reports.index', compact('transactions', 'totalSales', 'totalTransactions', 'averageTransaction', 'chartData', 'start', 'end', 'period', 'bestSellers'));
+    }
+
+    public function voidReport(Request $request)
+    {
+        $start = $request->start_date ? Carbon::parse($request->start_date) : Carbon::today()->subDays(30);
+        $end = $request->end_date ? Carbon::parse($request->end_date) : Carbon::today();
+        $voids = Transaction::where('status', 'void')
+            ->whereBetween('voided_at', [$start->startOfDay(), $end->endOfDay()])
+            ->with('cashier', 'voidedBy')
+            ->get();
+        return view('reports.void', compact('voids', 'start', 'end'));
+    }
+
+    public function productReport(Request $request)
+    {
+        $start = $request->start_date ? Carbon::parse($request->start_date) : Carbon::today()->subDays(30);
+        $end = $request->end_date ? Carbon::parse($request->end_date) : Carbon::today();
+        $bestSellers = TransactionItem::select('product_id', DB::raw('SUM(quantity) as total'))
+            ->whereHas('transaction', function ($q) use ($start, $end) {
+                $q->whereBetween('transaction_date', [$start, $end])->where('status', 'completed');
+            })
+            ->groupBy('product_id')->orderBy('total', 'desc')->limit(10)->with('product')->get();
+        $leastSellers = TransactionItem::select('product_id', DB::raw('SUM(quantity) as total'))
+            ->whereHas('transaction', function ($q) use ($start, $end) {
+                $q->whereBetween('transaction_date', [$start, $end])->where('status', 'completed');
+            })
+            ->groupBy('product_id')->orderBy('total', 'asc')->limit(10)->with('product')->get();
+        return view('reports.product', compact('bestSellers', 'leastSellers', 'start', 'end'));
     }
 }
