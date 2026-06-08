@@ -15,8 +15,7 @@
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "mike42/escpos-php": "^4.0",
-        "spatie/laravel-permission": "^8.0",
-        "marianz-bonfire/tarsier-escpos-php": "dev-main"
+        "spatie/laravel-permission": "^8.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -80,12 +79,6 @@
             "php-http/discovery": true
         }
     },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/marianz-bonfire/tarsier-escpos-php"
-        }
-    ],
     "minimum-stability": "dev",
     "prefer-stable": true
 }
