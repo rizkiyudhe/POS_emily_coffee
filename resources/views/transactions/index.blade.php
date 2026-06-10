@@ -1,153 +1,248 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h2 class="font-bold text-2xl text-slate-800 leading-tight tracking-tight">
                 {{ __('Riwayat Transaksi') }}
             </h2>
             @can('create transactions')
                 <a href="{{ route('transactions.create') }}"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition">
-                    + Transaksi Baru
+                    class="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-xl shadow-sm transition-all duration-200 hover:-translate-y-0.5 w-full sm:w-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Transaksi Baru
                 </a>
             @endcan
         </div>
     </x-slot>
 
-    <div class="py-6">
-        <!-- Filter Form -->
-        <div class="mb-6 bg-white rounded-2xl shadow-lg p-4">
-            <form method="GET" action="{{ route('transactions.index') }}" class="flex flex-wrap gap-4 items-end">
-                <div>
-                    <label class="block text-gray-700 text-sm font-medium mb-1">Dari Tanggal</label>
-                    <input type="date" name="start_date" value="{{ request('start_date') }}"
-                        class="border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label class="block text-gray-700 text-sm font-medium mb-1">Sampai Tanggal</label>
-                    <input type="date" name="end_date" value="{{ request('end_date') }}"
-                        class="border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                <div class="flex-1 min-w-[200px]">
-                    <label class="block text-gray-700 text-sm font-medium mb-1">Cari (Invoice / Queue)</label>
-                    <input type="text" name="search" value="{{ request('search') }}"
-                        placeholder="INV-... atau A001..."
-                        class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                <div>
-                    <button type="submit"
-                        class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg shadow transition">
-                        🔍 Filter
-                    </button>
-                    <a href="{{ route('transactions.index') }}"
-                        class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg shadow transition ml-2">
-                        Reset
-                    </a>
-                </div>
-            </form>
-        </div>
+    <div class="py-8 bg-slate-50/50 min-h-screen">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        <!-- Tabel Transaksi -->
-        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Invoice</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Queue</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Meja</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Kasir</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Total</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Tanggal</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @forelse($transactions as $trx)
-                            <tr class="hover:bg-gray-50 transition">
-                                <td class="px-6 py-4 text-sm font-mono">{{ $trx->invoice_number }}</td>
-                                <td class="px-6 py-4 text-sm">{{ $trx->queue_number }}</td>
-                                <td class="px-6 py-4 text-sm">{{ $trx->table->table_number ?? 'Take Away' }}</td>
-                                <td class="px-6 py-4 text-sm">{{ $trx->cashier->name }}</td>
-                                <td class="px-6 py-4 text-sm font-medium">Rp
-                                    {{ number_format($trx->total_amount, 0, ',', '.') }}</td>
-                                <td class="px-6 py-4">
-                                    @if ($trx->status == 'void')
-                                        <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Void</span>
-                                    @else
-                                        <span
-                                            class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Selesai</span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 text-sm">{{ $trx->transaction_date->format('d/m/Y H:i') }}</td>
-                                <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
-                                    <!-- Lihat Detail / Struk -->
-                                    <a href="{{ route('transactions.receipt', $trx) }}"
-                                        class="text-blue-600 hover:text-blue-800">Struk</a>
+            <div class="mb-6 bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                <form method="GET" action="{{ route('transactions.index') }}"
+                    class="flex flex-col lg:flex-row gap-4 items-end">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full lg:w-auto">
+                        <div>
+                            <label class="block text-slate-700 text-sm font-semibold mb-1.5">Dari Tanggal</label>
+                            <input type="date" name="start_date" value="{{ request('start_date') }}"
+                                class="w-full border-slate-300 text-slate-700 rounded-xl shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition py-2.5">
+                        </div>
+                        <div>
+                            <label class="block text-slate-700 text-sm font-semibold mb-1.5">Sampai Tanggal</label>
+                            <input type="date" name="end_date" value="{{ request('end_date') }}"
+                                class="w-full border-slate-300 text-slate-700 rounded-xl shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition py-2.5">
+                        </div>
+                    </div>
 
-                                    <!-- Cetak Ulang (Hanya jika punya permission) -->
-                                    @can('reprint receipt')
-                                        <form action="{{ route('transactions.reprint-customer', $trx) }}" method="POST"
-                                            class="inline">
-                                            @csrf
-                                            <button type="submit" class="text-green-600 hover:text-green-800">Cetak
-                                                Konsumen</button>
-                                        </form>
-                                    @endcan
+                    <div class="flex-1 w-full">
+                        <label class="block text-slate-700 text-sm font-semibold mb-1.5">Cari (Invoice / Queue)</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                </svg>
+                            </div>
+                            <input type="text" name="search" value="{{ request('search') }}"
+                                placeholder="INV-... atau A001..."
+                                class="pl-10 w-full border-slate-300 text-slate-700 rounded-xl shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition py-2.5">
+                        </div>
+                    </div>
 
-                                    @can('reprint kot')
-                                        <form action="{{ route('transactions.reprint-checker', $trx) }}" method="POST"
-                                            class="inline">
-                                            @csrf
-                                            <button type="submit" class="text-purple-600 hover:text-purple-800">Cetak
-                                                Checker</button>
-                                        </form>
-                                        <form action="{{ route('transactions.reprint-kitchen', $trx) }}" method="POST"
-                                            class="inline">
-                                            @csrf
-                                            <button type="submit" class="text-orange-600 hover:text-orange-800">Cetak
-                                                Dapur</button>
-                                        </form>
-                                    @endcan
-                                    @can('void transactions')
-                                        <button type="button" onclick="openVoidModal({{ $trx->id }})"
-                                            class="text-red-600 hover:text-red-800 ml-2">Void</button>
-                                    @endcan
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="8" class="px-6 py-4 text-center text-gray-500">Belum ada transaksi.
-                                    Silakan buat transaksi baru.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                    <div class="flex gap-3 w-full lg:w-auto">
+                        <button type="submit"
+                            class="flex-1 lg:flex-none inline-flex items-center justify-center bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 px-6 rounded-xl shadow-sm transition duration-200">
+                            Filter
+                        </button>
+                        <a href="{{ route('transactions.index') }}"
+                            class="flex-1 lg:flex-none inline-flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-6 rounded-xl transition duration-200">
+                            Reset
+                        </a>
+                    </div>
+                </form>
             </div>
-            <div class="px-6 py-4 border-t border-gray-200">
-                {{ $transactions->appends(request()->query())->links() }}
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50/80 border-b border-slate-200">
+                            <tr>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    Invoice</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    Queue</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    Meja</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    Kasir</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    Total</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    Status</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    Tanggal</th>
+                                <th
+                                    class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-100">
+                            @forelse($transactions as $trx)
+                                <tr class="hover:bg-slate-50 transition-colors duration-150">
+                                    <td class="px-6 py-4 text-sm font-semibold text-slate-700 font-mono">
+                                        {{ $trx->invoice_number }}</td>
+                                    <td class="px-6 py-4 text-sm font-medium text-slate-600">{{ $trx->queue_number }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-500">
+                                        <span
+                                            class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium {{ $trx->table_id ? 'bg-slate-100 text-slate-700' : 'bg-amber-50 border border-amber-200 text-amber-700' }}">
+                                            {{ $trx->table->table_number ?? 'Take Away' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-600 font-medium">{{ $trx->cashier->name }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm font-bold text-slate-800">
+                                        Rp {{ number_format($trx->total_amount, 0, ',', '.') }}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @if ($trx->status == 'void')
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-1 text-xs font-bold rounded-lg border bg-rose-50 border-rose-200 text-rose-700">
+                                                <span class="w-1.5 h-1.5 rounded-full mr-1.5 bg-rose-500"></span>
+                                                Void
+                                            </span>
+                                        @else
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-1 text-xs font-bold rounded-lg border bg-emerald-50 border-emerald-200 text-emerald-700">
+                                                <span class="w-1.5 h-1.5 rounded-full mr-1.5 bg-emerald-500"></span>
+                                                Selesai
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-500 font-medium">
+                                        {{ $trx->transaction_date->format('d/m/Y H:i') }}</td>
+                                    <td class="px-6 py-4 text-right text-sm font-medium whitespace-nowrap space-x-1.5">
+
+                                        <a href="{{ route('transactions.receipt', $trx) }}"
+                                            class="inline-flex items-center justify-center px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-xs font-bold rounded-xl transition"
+                                            title="Lihat Struk">
+                                            Struk
+                                        </a>
+
+                                        @can('reprint receipt')
+                                            <form action="{{ route('transactions.reprint-customer', $trx) }}"
+                                                method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit"
+                                                    class="inline-flex items-center justify-center px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl transition">
+                                                    Konsumen
+                                                </button>
+                                            </form>
+                                        @endcan
+
+                                        @can('reprint kot')
+                                            <form action="{{ route('transactions.reprint-checker', $trx) }}" method="POST"
+                                                class="inline">
+                                                @csrf
+                                                <button type="submit"
+                                                    class="inline-flex items-center justify-center px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 text-xs font-bold rounded-xl transition">
+                                                    Checker
+                                                </button>
+                                            </form>
+
+                                            <form action="{{ route('transactions.reprint-kitchen', $trx) }}" method="POST"
+                                                class="inline">
+                                                @csrf
+                                                <button type="submit"
+                                                    class="inline-flex items-center justify-center px-2.5 py-1.5 bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-700 text-xs font-bold rounded-xl transition">
+                                                    Dapur
+                                                </button>
+                                            </form>
+                                        @endcan
+
+                                        @can('void transactions')
+                                            @if ($trx->status != 'void')
+                                                <button type="button" onclick="openVoidModal({{ $trx->id }})"
+                                                    class="inline-flex items-center justify-center px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 text-xs font-bold rounded-xl transition">
+                                                    Void
+                                                </button>
+                                            @endif
+                                        @endcan
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8" class="px-6 py-12 text-center">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <svg class="w-12 h-12 text-slate-300 mb-3"
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                            </svg>
+                                            <p class="text-slate-500 font-medium">Belum ada transaksi tercatat pada
+                                                sistem.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                @if ($transactions->hasPages())
+                    <div class="px-6 py-4 border-t border-slate-200 bg-slate-50/50">
+                        {{ $transactions->appends(request()->query())->links() }}
+                    </div>
+                @endif
             </div>
         </div>
     </div>
 
-    <div id="voidModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 w-96">
-            <h3 class="text-lg font-bold mb-4">Void Transaksi</h3>
+    <div id="voidModal"
+        class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center z-50 transition-all duration-300">
+        <div
+            class="bg-white rounded-2xl border border-slate-100 p-6 w-full max-w-md shadow-2xl mx-4 transform transition-all">
+            <div class="flex items-center gap-3 mb-3 border-b border-slate-100 pb-3">
+                <div class="p-2 bg-rose-50 text-rose-600 rounded-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800">Void Transaksi</h3>
+            </div>
+
             <form id="voidForm" method="POST">
                 @csrf
-                <textarea name="reason" rows="3" class="w-full border rounded p-2" placeholder="Alasan void..." required></textarea>
-                <div class="flex justify-end gap-2 mt-4">
+                <div class="mb-4">
+                    <label class="block text-slate-600 text-xs font-semibold uppercase tracking-wider mb-2">Alasan
+                        Pembatalan (Void)</label>
+                    <textarea name="reason" rows="3"
+                        class="w-full border-slate-300 text-slate-700 rounded-xl shadow-sm focus:border-rose-500 focus:ring-2 focus:ring-rose-100 transition p-3 text-sm"
+                        placeholder="Ketik alasan pembatalan transaksi secara detail..." required></textarea>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-2 border-t border-slate-100">
                     <button type="button" onclick="closeVoidModal()"
-                        class="px-4 py-2 bg-gray-300 rounded">Batal</button>
-                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded">Void Transaksi</button>
+                        class="inline-flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-xl transition text-sm">
+                        Batal
+                    </button>
+                    <button type="submit"
+                        class="inline-flex items-center justify-center bg-rose-600 hover:bg-rose-700 text-white font-semibold py-2 px-4 rounded-xl shadow-sm transition text-sm">
+                        Void Transaksi
+                    </button>
                 </div>
             </form>
         </div>
@@ -162,6 +257,7 @@
             modal.classList.add('flex');
         }
 
+        // Menutup modal dengan smooth esc / klik luar opsional
         function closeVoidModal() {
             const modal = document.getElementById('voidModal');
             modal.classList.add('hidden');
