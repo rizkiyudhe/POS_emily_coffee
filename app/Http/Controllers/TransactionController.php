@@ -9,7 +9,6 @@ use App\Models\Product;
 use App\Models\ActivityLog;
 use App\Services\CartService;
 use App\Helpers\TransactionHelper;
-use App\Services\PrintService;
 use Illuminate\Http\Request;
 use App\Helpers\TransactionCalculator;
 use App\Models\StoreSetting;
@@ -53,7 +52,7 @@ class TransactionController extends Controller
         $cart = $this->cart->getCart();
         $total = $this->cart->getTotal();
 
-        // TAMBAHKAN INI: Ambil semua produk untuk dilempar ke Blade
+        // Ambil semua produk untuk dilempar ke Blade
         $products = Product::with('category')->get()->map(function ($prod) {
             return [
                 'id' => $prod->id,
@@ -65,7 +64,6 @@ class TransactionController extends Controller
             ];
         });
 
-        // Masukkan variabel 'products' ke dalam compact
         return view('transactions.create', compact('tables', 'cart', 'total', 'products'));
     }
 
@@ -124,7 +122,7 @@ class TransactionController extends Controller
         $discountType = $request->discount_type;
         $discountValue = $request->discount_value ?? 0;
 
-        // Ambil konfigurasi pajak dan service dari database (default jika belum ada)
+        // Ambil konfigurasi pajak dan service dari database
         $taxPercentage = (float) StoreSetting::get('tax_percentage', 11);
         $servicePercentage = (float) StoreSetting::get('service_percentage', 5);
         $enableTax = StoreSetting::get('enable_tax', true);
@@ -141,12 +139,15 @@ class TransactionController extends Controller
             return response()->json(['success' => false, 'message' => 'Pembayaran kurang!'], 400);
         }
 
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+
         $transaction = Transaction::create([
             'invoice_number'     => TransactionHelper::generateInvoiceNumber(),
             'queue_number'       => TransactionHelper::generateQueueNumber(),
             'table_id'           => $request->table_id,
             'order_type'         => $request->order_type,
-            'user_id'            => auth()->id(),
+            'user_id'            => $user->id, // Menggunakan properti id yang dikenali VS Code
             'total_amount'       => $grandTotal,
             'paid_amount'        => $paid,
             'change_amount'      => $paid - $grandTotal,
@@ -179,14 +180,8 @@ class TransactionController extends Controller
             Table::find($request->table_id)->update(['status' => 'occupied']);
         }
 
-        // Cetak struk dan KOT
-        $printService = new \App\Services\PrintService();
-        $printService->printReceiptCustomer($transaction);
-        $printService->printChecker($transaction);
-        $printService->printKitchen($transaction);
-
         ActivityLog::create([
-            'user_id'     => auth()->id(),
+            'user_id'     => $user->id, // Menggunakan properti id yang dikenali VS Code
             'action'      => 'create transaction',
             'description' => "Transaksi {$transaction->invoice_number}",
             'ip_address'  => $request->ip(),
@@ -199,8 +194,11 @@ class TransactionController extends Controller
 
     public function void(Transaction $transaction, Request $request)
     {
-        // Manual permission check
-        if (!auth()->user()->hasPermissionTo('void transactions')) {
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+
+        // Sekarang VS Code tahu method hasPermissionTo() itu ada di Model User
+        if (!$user->hasPermissionTo('void transactions')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -210,7 +208,6 @@ class TransactionController extends Controller
             return back()->with('error', 'Transaksi sudah void.');
         }
 
-        // Kembalikan stok
         foreach ($transaction->items as $item) {
             $item->product->increment('stock', $item->quantity);
         }
@@ -218,12 +215,12 @@ class TransactionController extends Controller
         $transaction->update([
             'status'      => 'void',
             'void_reason' => $request->reason,
-            'voided_by'   => auth()->id(),
+            'voided_by'   => $user->id, // Menggunakan properti id yang dikenali VS Code
             'voided_at'   => now(),
         ]);
 
         ActivityLog::create([
-            'user_id'     => auth()->id(),
+            'user_id'     => $user->id, // Menggunakan properti id yang dikenali VS Code
             'action'      => 'void transaction',
             'description' => "Void transaksi {$transaction->invoice_number} dengan alasan: {$request->reason}",
             'ip_address'  => $request->ip(),
@@ -239,25 +236,19 @@ class TransactionController extends Controller
 
     public function reprintCustomer(Transaction $transaction)
     {
-        $print = new \App\Services\PrintService();
-        $print->printReceiptCustomer($transaction);
-        $print->close();
-        return back()->with('success', 'Struk konsumen dicetak ulang.');
+        return redirect()->route('transactions.receipt', [$transaction, 'type' => 'customer'])
+            ->with('success', 'Silakan cetak ulang struk konsumen melalui browser.');
     }
 
     public function reprintChecker(Transaction $transaction)
     {
-        $print = new \App\Services\PrintService();
-        $print->printChecker($transaction);
-        $print->close();
-        return back()->with('success', 'Struk checker dicetak ulang.');
+        return redirect()->route('transactions.receipt', [$transaction, 'type' => 'checker'])
+            ->with('success', 'Silakan cetak ulang struk checker melalui browser.');
     }
 
     public function reprintKitchen(Transaction $transaction)
     {
-        $print = new \App\Services\PrintService();
-        $print->printKitchen($transaction);
-        $print->close();
-        return back()->with('success', 'Struk dapur dicetak ulang.');
+        return redirect()->route('transactions.receipt', [$transaction, 'type' => 'kitchen'])
+            ->with('success', 'Silakan cetak ulang struk dapur melalui browser.');
     }
 }

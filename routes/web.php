@@ -50,12 +50,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/cart-data', [TransactionController::class, 'cartData'])->name('cart-data')->middleware('permission:create transactions');
         Route::post('/store', [TransactionController::class, 'store'])->name('store')->middleware('permission:create transactions');
         Route::get('/receipt/{transaction}', [TransactionController::class, 'receipt'])->name('receipt')->middleware('permission:view transactions');
-        Route::post('/reprint-receipt/{transaction}', [TransactionController::class, 'reprintReceipt'])->name('reprint-receipt')->middleware('permission:reprint receipt');
-        Route::post('/reprint-kot/{transaction}', [TransactionController::class, 'reprintKOT'])->name('reprint-kot')->middleware('permission:reprint kot');
-        // ❌ HAPUS baris ini:
-        // Route::get('/transactions/receipt/{transaction}', [TransactionController::class, 'receipt'])->name('transactions.receipt');
 
-        Route::post('/{transaction}/void', [TransactionController::class, 'void'])->name('void');
+        // Perbaikan di baris ini (reprint-checker diubah menjadi reprintChecker):
+        Route::post('/reprint-customer/{transaction}', [TransactionController::class, 'reprintCustomer'])->name('reprint-customer')->middleware('permission:reprint receipt');
+        Route::post('/reprint-checker/{transaction}', [TransactionController::class, 'reprintChecker'])->name('reprint-checker')->middleware('permission:reprint kot');
+        Route::post('/reprint-kitchen/{transaction}', [TransactionController::class, 'reprintKitchen'])->name('reprint-kitchen')->middleware('permission:reprint kot');
+
+        Route::post('/{transaction}/void', [TransactionController::class, 'void'])->name('void')->middleware('permission:void transactions');
     });
 
     Route::post('/transactions/reprint-customer/{transaction}', [TransactionController::class, 'reprintCustomer'])->name('transactions.reprint-customer');

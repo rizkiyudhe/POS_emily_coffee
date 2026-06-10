@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 
 class TableController extends Controller
 {
-
     public function index()
     {
         $tables = Table::orderBy('table_number')->paginate(10);
@@ -36,8 +35,11 @@ class TableController extends Controller
 
         $table = Table::create($request->all());
 
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+
         ActivityLog::create([
-            'user_id' => auth()->id(),
+            'user_id' => $user->id,
             'action' => 'create table',
             'description' => "Menambahkan meja nomor {$table->table_number}",
             'ip_address' => $request->ip()
@@ -60,17 +62,21 @@ class TableController extends Controller
      */
     public function update(Request $request, Table $table)
     {
+        // FIX: Validasi disamakan menggunakan bahasa Inggris sesuai isi values select HTML
         $request->validate([
             'table_number' => 'required|string|unique:tables,table_number,' . $table->id,
             'capacity' => 'required|integer|min:1',
-            'status' => 'required|in:tersedia,terisi,dibooking'
+            'status' => 'required|in:available,occupied,reserved'
         ]);
 
         $oldNumber = $table->table_number;
         $table->update($request->all());
 
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+
         ActivityLog::create([
-            'user_id' => auth()->id(),
+            'user_id' => $user->id,
             'action' => 'update table',
             'description' => "Mengubah meja {$oldNumber} menjadi {$table->table_number}",
             'ip_address' => $request->ip()
@@ -88,8 +94,11 @@ class TableController extends Controller
         $tableNumber = $table->table_number;
         $table->delete();
 
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+
         ActivityLog::create([
-            'user_id' => auth()->id(),
+            'user_id' => $user->id,
             'action' => 'delete table',
             'description' => "Menghapus meja nomor {$tableNumber}",
             'ip_address' => $request->ip()
