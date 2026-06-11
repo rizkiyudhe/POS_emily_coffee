@@ -32,7 +32,8 @@ class CartService
                 'name'       => $product->name,
                 'price'      => $product->price,
                 'quantity'   => $quantity,
-                'subtotal'   => $product->price * $quantity
+                'subtotal'   => $product->price * $quantity,
+                'notes'      => '' // 👈 FIX: Inisialisasi awal catatan kosong
             ];
         }
 
@@ -68,6 +69,9 @@ class CartService
         session()->put($this->sessionKey, $cart);
     }
 
+    /**
+     * Update catatan spesifik per item
+     */
     public function updateNote($productId, $note)
     {
         $cart = $this->getCart();

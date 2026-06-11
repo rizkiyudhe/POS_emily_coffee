@@ -69,12 +69,12 @@
                 <div class="text-center border-b-2 border-dashed border-slate-300 pb-4">
                     @if (request('type') == 'checker')
                         <h2 class="font-black text-2xl tracking-tight text-slate-900">STRUK CHECKER</h2>
-                        <p class="text-xs text-slate-500 mt-1">Emily Coffe</p>
+                        <p class="text-xs text-slate-500 mt-1">Emily Coffee</p>
                     @elseif(request('type') == 'kitchen')
                         <h2 class="font-black text-2xl tracking-tight text-slate-900">ORDER DAPUR</h2>
-                        <p class="text-xs text-slate-500 mt-1">Emily Coffe</p>
+                        <p class="text-xs text-slate-500 mt-1">Emily Coffee</p>
                     @else
-                        <h2 class="font-black text-2xl tracking-tight text-slate-900">Emily Coffe</h2>
+                        <h2 class="font-black text-2xl tracking-tight text-slate-900">Emily Coffee</h2>
                         <p class="text-xs text-slate-500 mt-1">Padang</p>
                         <p class="text-xs text-slate-500">Telp: 08123456789</p>
                     @endif
@@ -119,13 +119,13 @@
                         <tbody class="divide-y divide-slate-100 divide-dashed">
                             @foreach ($transaction->items as $item)
                                 <tr>
-                                    <td class="py-2.5 pr-1 font-medium text-slate-900 break-words max-w-[140px]">
-                                        {{ $item->product->name }}
+                                    <td class="py-2.5 pr-1 text-slate-900 break-words max-w-[140px]">
+                                        <div class="font-medium">{{ $item->product->name }}</div>
 
                                         @if ($item->notes)
                                             <span
-                                                class="block text-xs text-rose-600 font-extrabold mt-0.5 bg-rose-50 px-1 py-0.5 rounded border border-rose-100 w-fit">
-                                                📌 {{ $item->notes }}
+                                                class="block text-xs text-rose-600 font-bold mt-0.5 print:text-slate-800 font-sans italic">
+                                                * Catatan: {{ $item->notes }}
                                             </span>
                                         @endif
                                     </td>
@@ -187,6 +187,13 @@
         </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        });
+    </script>
 
     <style media="print">
         body * {

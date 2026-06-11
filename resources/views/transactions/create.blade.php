@@ -228,22 +228,22 @@
                 let html = '';
                 products.forEach(prod => {
                     html += `
-                    <div class="product-card bg-white border border-slate-200 rounded-2xl p-3.5 flex flex-col justify-between shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md hover:border-blue-300 group" data-id="${prod.id}">
-                        <div>
-                            <span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md font-bold inline-block mb-2">${escapeHtml(prod.category_name)}</span>
-                            <div class="font-bold text-slate-800 text-xs sm:text-sm line-clamp-2 group-hover:text-blue-600 transition-colors">${escapeHtml(prod.name)}</div>
-                            <div class="text-[11px] text-slate-400 mt-1 font-mono tracking-tight">SKU: ${escapeHtml(prod.sku || '-')}</div>
-                        </div>
-                        <div class="mt-4 flex items-center justify-between pt-2.5 border-t border-slate-50">
-                            <span class="font-extrabold text-slate-900 text-xs sm:text-sm">Rp ${prod.price.toLocaleString('id-ID')}</span>
-                            <div class="bg-blue-600 group-hover:bg-blue-700 text-white rounded-xl p-1.5 shadow-sm transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                                </svg>
-                            </div>
+                <div class="product-card bg-white border border-slate-200 rounded-2xl p-3.5 flex flex-col justify-between shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md hover:border-blue-300 group" data-id="${prod.id}">
+                    <div>
+                        <span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md font-bold inline-block mb-2">${escapeHtml(prod.category_name)}</span>
+                        <div class="font-bold text-slate-800 text-xs sm:text-sm line-clamp-2 group-hover:text-blue-600 transition-colors">${escapeHtml(prod.name)}</div>
+                        <div class="text-[11px] text-slate-400 mt-1 font-mono tracking-tight">SKU: ${escapeHtml(prod.sku || '-')}</div>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between pt-2.5 border-t border-slate-50">
+                        <span class="font-extrabold text-slate-900 text-xs sm:text-sm">Rp ${prod.price.toLocaleString('id-ID')}</span>
+                        <div class="bg-blue-600 group-hover:bg-blue-700 text-white rounded-xl p-1.5 shadow-sm transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                            </svg>
                         </div>
                     </div>
-                `;
+                </div>
+            `;
                 });
                 grid.innerHTML = html;
 
@@ -293,12 +293,12 @@
                 let html = '';
                 products.forEach((prod, idx) => {
                     html += `
-                    <div class="autocomplete-item flex flex-col px-4 py-3 cursor-pointer transition-colors border-l-4 border-transparent hover:bg-slate-50"
-                         data-id="${prod.id}" data-index="${idx}">
-                        <div class="font-semibold text-slate-800 text-sm">${escapeHtml(prod.name)}</div>
-                        <div class="text-xs text-slate-500 mt-0.5">SKU: <span class="font-mono bg-slate-100 px-1 rounded">${escapeHtml(prod.sku)}</span> | Harga: Rp ${prod.price.toLocaleString('id-ID')}</div>
-                    </div>
-                `;
+                <div class="autocomplete-item flex flex-col px-4 py-3 cursor-pointer transition-colors border-l-4 border-transparent hover:bg-slate-50"
+                     data-id="${prod.id}" data-index="${idx}">
+                    <div class="font-semibold text-slate-800 text-sm">${escapeHtml(prod.name)}</div>
+                    <div class="text-xs text-slate-500 mt-0.5">SKU: <span class="font-mono bg-slate-100 px-1 rounded">${escapeHtml(prod.sku)}</span> | Harga: Rp ${prod.price.toLocaleString('id-ID')}</div>
+                </div>
+            `;
                 });
                 resultsDiv.innerHTML = html;
                 resultsDiv.classList.remove('hidden');
@@ -395,7 +395,7 @@
                 if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) hideResults();
             });
 
-            // AJAX Keranjang Belanja
+            // AJAX: Tambah ke Keranjang Belanja
             function addToCart(productId, quantity = 1) {
                 fetch('{{ route('transactions.add-to-cart') }}', {
                         method: 'POST',
@@ -416,7 +416,8 @@
                     .catch(err => console.error(err));
             }
 
-            function updateCart(productId, quantity) {
+            // AJAX: Perbarui Keranjang (Ditambahkan variabel Catatan/Notes)
+            function updateCart(productId, quantity, notesValue = '') {
                 fetch('{{ route('transactions.update-cart') }}', {
                         method: 'POST',
                         headers: {
@@ -425,7 +426,8 @@
                         },
                         body: JSON.stringify({
                             product_id: productId,
-                            quantity: quantity
+                            quantity: quantity,
+                            notes: notesValue // 👈 Mengirim catatan menu ke backend session
                         })
                     })
                     .then(res => res.json())
@@ -434,6 +436,7 @@
                     });
             }
 
+            // AJAX: Hapus Item Keranjang
             function removeFromCart(productId) {
                 fetch(`/transactions/remove-from-cart/${productId}`, {
                         method: 'DELETE',
@@ -462,11 +465,19 @@
                     });
             }
 
+            // Event Listener Keranjang Belanja Baru (Mendukung input Catatan/Notes)
             function attachCartEvents() {
                 document.querySelectorAll('.cart-qty').forEach(input => {
                     input.removeEventListener('change', handleQuantityChange);
                     input.addEventListener('change', handleQuantityChange);
                 });
+
+                // 👈 Menambahkan Event Listener untuk Kolom Catatan Menu
+                document.querySelectorAll('.product-note').forEach(input => {
+                    input.removeEventListener('change', handleNoteChange);
+                    input.addEventListener('change', handleNoteChange);
+                });
+
                 document.querySelectorAll('.remove-item').forEach(btn => {
                     btn.removeEventListener('click', handleRemoveClick);
                     btn.addEventListener('click', handleRemoveClick);
@@ -477,7 +488,24 @@
                 let id = e.target.getAttribute('data-id');
                 let qty = parseInt(e.target.value);
                 if (isNaN(qty) || qty < 1) qty = 1;
-                updateCart(id, qty);
+
+                // Mengambil isi catatan aktif agar tidak hilang saat QTY diubah
+                let noteInput = e.target.closest('tr').querySelector('.product-note');
+                let notes = noteInput ? noteInput.value : '';
+
+                updateCart(id, qty, notes);
+            }
+
+            // Handler saat kasir mengubah teks di kolom catatan
+            function handleNoteChange(e) {
+                let id = e.target.getAttribute('data-id');
+                let notes = e.target.value;
+
+                // Mengambil jumlah QTY aktif di baris yang sama
+                let qtyInput = e.target.closest('tr').querySelector('.cart-qty');
+                let qty = qtyInput ? parseInt(qtyInput.value) : 1;
+
+                updateCart(id, qty, notes);
             }
 
             function handleRemoveClick(e) {
@@ -518,7 +546,10 @@
                 let totalText = document.getElementById('total-amount').innerText;
                 let total = parseInt(totalText.replace(/[^0-9]/g, '')) || 0;
 
-                // Tipe pesanan otomatis mendeteksi dari dropdown Meja (Jika ada meja = Dine In, Kosong = Take Away)
+                // Membaca input catatan transaksi global (jika ada elemen dengan id "transaction-notes")
+                let globalNotesEl = document.getElementById('transaction-notes');
+                let globalNotes = globalNotesEl ? globalNotesEl.value : '';
+
                 let orderType = tableId ? 'dine_in' : 'takeaway';
 
                 if (paidAmount < total) {
@@ -537,7 +568,7 @@
                             order_type: orderType,
                             discount_type: discountType,
                             discount_value: discountValue,
-                            notes: '',
+                            notes: globalNotes, // Mengirim catatan global transaksi
                             payment_method: paymentMethod,
                             paid_amount: paidAmount
                         })

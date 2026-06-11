@@ -67,23 +67,36 @@ class TransactionController extends Controller
         return view('transactions.create', compact('tables', 'cart', 'total', 'products'));
     }
 
+    // TIMPA FUNGSI INI
     public function addToCart(Request $request)
     {
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity' => 'integer|min:1'
         ]);
+
         $this->cart->addItem($request->product_id, $request->quantity);
+
         return response()->json(['success' => true]);
     }
 
+    // TIMPA FUNGSI INI
     public function updateCart(Request $request)
     {
         $request->validate([
             'product_id' => 'required',
-            'quantity' => 'required|integer|min:0'
+            'quantity'   => 'required|integer|min:1',
+            'notes'      => 'nullable|string'
         ]);
+
+        // 1. Update jumlah pesanan
         $this->cart->updateQuantity($request->product_id, $request->quantity);
+
+        // 2. Update catatan menggunakan fungsi bawaan CartService kamu
+        if ($request->has('notes')) {
+            $this->cart->updateNote($request->product_id, $request->notes ?? '');
+        }
+
         return response()->json(['success' => true]);
     }
 
@@ -118,6 +131,8 @@ class TransactionController extends Controller
             return response()->json(['success' => false, 'message' => 'Cart kosong!'], 400);
         }
 
+        //return response()->json(['success' => false, 'message' => json_encode($cart)]);
+
         $subtotal = $this->cart->getTotal();
         $discountType = $request->discount_type;
         $discountValue = $request->discount_value ?? 0;
@@ -137,6 +152,7 @@ class TransactionController extends Controller
         $paid = $request->paid_amount;
         if ($paid < $grandTotal) {
             return response()->json(['success' => false, 'message' => 'Pembayaran kurang!'], 400);
+            return response()->json(['success' => false, 'message' => 'Pembayaran kurang!'], 400);
         }
 
         /** @var \App\Models\User $user */
@@ -147,14 +163,14 @@ class TransactionController extends Controller
             'queue_number'       => TransactionHelper::generateQueueNumber(),
             'table_id'           => $request->table_id,
             'order_type'         => $request->order_type,
-            'user_id'            => $user->id, // Menggunakan properti id yang dikenali VS Code
+            'user_id'            => $user->id,
             'total_amount'       => $grandTotal,
             'paid_amount'        => $paid,
             'change_amount'      => $paid - $grandTotal,
             'payment_method'     => $request->payment_method,
             'status'             => 'completed',
             'transaction_date'   => now(),
-            'notes'              => $request->notes,
+            'notes'              => $request->notes, // Catatan global transaksi
             'discount_type'      => $discountType,
             'discount_value'     => $discountValue,
             'discount_amount'    => $calc['discount_amount'],
@@ -164,6 +180,9 @@ class TransactionController extends Controller
             'service_amount'     => $calc['service_amount'],
         ]);
 
+        // Ambil data session murni untuk menyelamatkan custom notes tiap menu
+        $sessionCart = session()->get('cart', []);
+
         foreach ($cart as $id => $item) {
             TransactionItem::create([
                 'transaction_id' => $transaction->id,
@@ -171,7 +190,7 @@ class TransactionController extends Controller
                 'quantity'       => $item['quantity'],
                 'price'          => $item['price'],
                 'subtotal'       => $item['subtotal'],
-                'notes'          => $item['notes'] ?? null,
+                'notes'          => isset($item['notes']) && $item['notes'] !== '' ? $item['notes'] : null,
             ]);
             Product::find($id)->decrement('stock', $item['quantity']);
         }
@@ -181,7 +200,7 @@ class TransactionController extends Controller
         }
 
         ActivityLog::create([
-            'user_id'     => $user->id, // Menggunakan properti id yang dikenali VS Code
+            'user_id'     => $user->id,
             'action'      => 'create transaction',
             'description' => "Transaksi {$transaction->invoice_number}",
             'ip_address'  => $request->ip(),
@@ -197,7 +216,6 @@ class TransactionController extends Controller
         /** @var \App\Models\User $user */
         $user = auth()->user();
 
-        // Sekarang VS Code tahu method hasPermissionTo() itu ada di Model User
         if (!$user->hasPermissionTo('void transactions')) {
             abort(403, 'Unauthorized action.');
         }
@@ -215,12 +233,12 @@ class TransactionController extends Controller
         $transaction->update([
             'status'      => 'void',
             'void_reason' => $request->reason,
-            'voided_by'   => $user->id, // Menggunakan properti id yang dikenali VS Code
+            'voided_by'   => $user->id,
             'voided_at'   => now(),
         ]);
 
         ActivityLog::create([
-            'user_id'     => $user->id, // Menggunakan properti id yang dikenali VS Code
+            'user_id'     => $user->id,
             'action'      => 'void transaction',
             'description' => "Void transaksi {$transaction->invoice_number} dengan alasan: {$request->reason}",
             'ip_address'  => $request->ip(),
