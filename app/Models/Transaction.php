@@ -19,7 +19,11 @@ class Transaction extends Model
         'transaction_date',
         'discount_type',
         'discount_value',
-        'discount_amount'
+        'discount_amount',
+        'voided_by',
+        'voided_at',
+        'void_reason',
+
     ];
     protected $casts = ['transaction_date' => 'datetime'];
     public function items()
@@ -33,5 +37,10 @@ class Transaction extends Model
     public function cashier()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function voider()
+    {
+        return $this->belongsTo(User::class, 'voided_by');
     }
 }

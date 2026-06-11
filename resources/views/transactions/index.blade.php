@@ -116,14 +116,34 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         @if ($trx->status == 'void')
-                                            <span
-                                                class="inline-flex items-center px-2.5 py-1 text-xs font-bold rounded-lg border bg-rose-50 border-rose-200 text-rose-700">
-                                                <span class="w-1.5 h-1.5 rounded-full mr-1.5 bg-rose-500"></span>
-                                                Void
-                                            </span>
+                                            <div class="flex flex-col gap-1.5">
+                                                <span
+                                                    class="inline-flex items-center w-max px-2.5 py-1 text-xs font-bold rounded-lg border bg-rose-50 border-rose-200 text-rose-700"
+                                                    title="Alasan: {{ $trx->void_reason }}">
+                                                    <span class="w-1.5 h-1.5 rounded-full mr-1.5 bg-rose-500"></span>
+                                                    Void
+                                                </span>
+
+                                                @if ($trx->voided_at)
+                                                    <div
+                                                        class="text-[10px] text-slate-500 leading-tight bg-slate-50 p-1.5 rounded-md border border-slate-100">
+                                                        Oleh: <span
+                                                            class="font-semibold text-slate-700">{{ $trx->voider->name ?? 'Admin (ID: ' . $trx->voided_by . ')' }}</span><br>
+                                                        Tgl:
+                                                        {{ \Carbon\Carbon::parse($trx->voided_at)->format('d/m/Y H:i') }}
+
+                                                        @if ($trx->void_reason)
+                                                            <div class="mt-1 pt-1 border-t border-slate-200 italic text-rose-600 line-clamp-2"
+                                                                title="{{ $trx->void_reason }}">
+                                                                "{{ $trx->void_reason }}"
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @endif
+                                            </div>
                                         @else
                                             <span
-                                                class="inline-flex items-center px-2.5 py-1 text-xs font-bold rounded-lg border bg-emerald-50 border-emerald-200 text-emerald-700">
+                                                class="inline-flex items-center w-max px-2.5 py-1 text-xs font-bold rounded-lg border bg-emerald-50 border-emerald-200 text-emerald-700">
                                                 <span class="w-1.5 h-1.5 rounded-full mr-1.5 bg-emerald-500"></span>
                                                 Selesai
                                             </span>
@@ -139,7 +159,7 @@
                                             Struk
                                         </a>
 
-                                        @can('reprint receipt')
+                                        {{-- @can('reprint receipt')
                                             <form action="{{ route('transactions.reprint-customer', $trx) }}"
                                                 method="POST" class="inline">
                                                 @csrf
@@ -168,7 +188,7 @@
                                                     Dapur
                                                 </button>
                                             </form>
-                                        @endcan
+                                        @endcan --}}
 
                                         @can('void transactions')
                                             @if ($trx->status != 'void')
