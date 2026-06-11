@@ -49,28 +49,42 @@ class PrintService
             $this->printer->text("Table: " . ($transaction->table->table_number ?? 'Take Away') . "\n");
             $this->printer->text("Cashier: {$transaction->cashier->name}\n");
             $this->printer->text("Date: {$transaction->transaction_date->format('d/m/Y H:i')}\n");
-            $this->printer->text("----------------------------\n");
+            $this->printer->text("------------------------------\n");
+
+            // Looping Item
             foreach ($transaction->items as $item) {
                 $this->printer->text($item->product->name . "\n");
+
+                // ✅ Menampilkan Catatan di Struk Konsumen
+                if (!empty($item->notes)) {
+                    $this->printer->text("  * Catatan: {$item->notes}\n");
+                }
+
                 $this->printer->text("  {$item->quantity} x " . number_format($item->price) . " = " . number_format($item->subtotal) . "\n");
             }
-            $this->printer->text("----------------------------\n");
+            $this->printer->text("------------------------------\n");
 
-            // ✅ Tambahkan diskon, pajak, service charge (jika ada)
+            // ✅ Menampilkan Subtotal & Diskon secara detail
             if ($transaction->discount_amount > 0) {
-                $this->printer->text("Diskon: " . number_format($transaction->discount_amount) . "\n");
+                $subtotalAwal = $transaction->total_amount + $transaction->discount_amount;
+                $this->printer->text("Subtotal : " . number_format($subtotalAwal) . "\n");
+
+                $labelDiskon = $transaction->discount_type === 'percentage' ? "{$transaction->discount_value}%" : "Nominal";
+                $this->printer->text("Diskon ({$labelDiskon}): -" . number_format($transaction->discount_amount) . "\n");
             }
+
             if ($transaction->tax_amount > 0) {
-                $this->printer->text("Pajak: " . number_format($transaction->tax_amount) . "\n");
+                $this->printer->text("Pajak    : " . number_format($transaction->tax_amount) . "\n");
             }
             if ($transaction->service_amount > 0) {
-                $this->printer->text("Service: " . number_format($transaction->service_amount) . "\n");
+                $this->printer->text("Service  : " . number_format($transaction->service_amount) . "\n");
             }
 
-            $this->printer->text("Total: " . number_format($transaction->total_amount) . "\n");
-            $this->printer->text("Paid: " . number_format($transaction->paid_amount) . "\n");
-            $this->printer->text("Change: " . number_format($transaction->change_amount) . "\n");
-            $this->printer->text("Payment: " . ucfirst($transaction->payment_method) . "\n");
+            $this->printer->text("==============================\n");
+            $this->printer->text("TOTAL    : " . number_format($transaction->total_amount) . "\n");
+            $this->printer->text("TUNAI    : " . number_format($transaction->paid_amount) . "\n");
+            $this->printer->text("KEMBALI  : " . number_format($transaction->change_amount) . "\n");
+            $this->printer->text("METODE   : " . strtoupper($transaction->payment_method) . "\n");
             $this->printer->text("==============================\n");
             $this->printer->setJustification(Printer::JUSTIFY_CENTER);
             $this->printer->text("Terima Kasih!\n");
@@ -96,11 +110,19 @@ class PrintService
             $this->printer->text("Queue: {$transaction->queue_number}\n");
             $this->printer->text("Table: " . ($transaction->table->table_number ?? 'Take Away') . "\n");
             $this->printer->text("Date: " . now()->format('d/m/Y H:i') . "\n");
-            $this->printer->text("----------------------------\n");
+            $this->printer->text("------------------------------\n");
+
+            // Looping Item
             foreach ($transaction->items as $item) {
                 $this->printer->text($item->quantity . "x " . $item->product->name . "\n");
+
+                // ✅ Menampilkan Catatan di Struk Checker
+                if (!empty($item->notes)) {
+                    $this->printer->text("  * Catatan: {$item->notes}\n");
+                }
             }
-            $this->printer->text("----------------------------\n");
+
+            $this->printer->text("------------------------------\n");
             $this->printer->text("Server: " . $transaction->cashier->name . "\n");
             $this->printer->feed(2);
             $this->printer->cut();
@@ -132,15 +154,19 @@ class PrintService
             $this->printer->text("Queue: {$transaction->queue_number}\n");
             $this->printer->text("Table: " . ($transaction->table->table_number ?? 'Take Away') . "\n");
             $this->printer->text("DateTime: " . now()->format('d/m/Y H:i') . "\n");
-            $this->printer->text("----------------------------\n");
+            $this->printer->text("------------------------------\n");
+
+            // Looping Item Makanan
             foreach ($foodItems as $item) {
                 $this->printer->text($item->quantity . "x " . $item->product->name . "\n");
-                if ($item->notes) {
-                    $this->printer->text(" (Catatan: {$item->notes})");
+
+                // ✅ Menampilkan Catatan di Struk Dapur
+                if (!empty($item->notes)) {
+                    $this->printer->text("  * Catatan: {$item->notes}\n");
                 }
-                $this->printer->text("\n");
             }
-            $this->printer->text("----------------------------\n");
+
+            $this->printer->text("------------------------------\n");
             $this->printer->feed(2);
             $this->printer->cut();
             $this->printer->close();

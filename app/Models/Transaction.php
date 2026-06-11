@@ -6,7 +6,21 @@ use Illuminate\Database\Eloquent\Model;
 
 class Transaction extends Model
 {
-    protected $fillable = ['invoice_number', 'queue_number', 'table_id', 'user_id', 'total_amount', 'paid_amount', 'change_amount', 'payment_method', 'status', 'transaction_date'];
+    protected $fillable = [
+        'invoice_number',
+        'queue_number',
+        'table_id',
+        'user_id',
+        'total_amount',
+        'paid_amount',
+        'change_amount',
+        'payment_method',
+        'status',
+        'transaction_date',
+        'discount_type',
+        'discount_value',
+        'discount_amount'
+    ];
     protected $casts = ['transaction_date' => 'datetime'];
     public function items()
     {

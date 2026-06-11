@@ -66,6 +66,7 @@
             id="receipt-content">
             <div class="bg-white p-4 font-mono text-slate-800 text-xs sm:text-sm leading-relaxed">
 
+                <!-- Header Struk -->
                 <div class="text-center border-b-2 border-dashed border-slate-300 pb-4">
                     @if (request('type') == 'checker')
                         <h2 class="font-black text-2xl tracking-tight text-slate-900">STRUK CHECKER</h2>
@@ -80,6 +81,7 @@
                     @endif
                 </div>
 
+                <!-- Info Transaksi -->
                 <div class="mt-4 space-y-1.5 border-b border-dashed border-slate-200 pb-4 text-slate-600">
                     <div class="flex justify-between">
                         <span>No. Invoice</span>
@@ -104,6 +106,7 @@
                     </div>
                 </div>
 
+                <!-- Tabel Item Menu -->
                 <div class="my-4">
                     <table class="w-full text-left border-collapse">
                         <thead>
@@ -130,13 +133,16 @@
                                         @endif
                                     </td>
                                     <td class="py-2.5 text-center text-slate-900 font-bold text-base">
-                                        {{ $item->quantity }}</td>
+                                        {{ $item->quantity }}
+                                    </td>
 
                                     @if (!in_array(request('type'), ['checker', 'kitchen']))
                                         <td class="py-2.5 text-right text-slate-600">
-                                            {{ number_format($item->price, 0, ',', '.') }}</td>
+                                            {{ number_format($item->price, 0, ',', '.') }}
+                                        </td>
                                         <td class="py-2.5 text-right font-semibold text-slate-900">
-                                            {{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                                            {{ number_format($item->subtotal, 0, ',', '.') }}
+                                        </td>
                                     @endif
                                 </tr>
                             @endforeach
@@ -144,14 +150,31 @@
                     </table>
                 </div>
 
+                <!-- Ringkasan Pembayaran & Diskon (Hanya untuk Mode Konsumen) -->
                 @if (!in_array(request('type'), ['checker', 'kitchen']))
                     <div class="border-t-2 border-dashed border-slate-300 pt-4 space-y-2">
+
+                        @if ($transaction->discount_amount > 0)
+                            <div class="flex justify-between items-center text-sm text-slate-600">
+                                <span>Subtotal</span>
+                                <span>Rp
+                                    {{ number_format($transaction->total_amount + $transaction->discount_amount, 0, ',', '.') }}</span>
+                            </div>
+                            <div
+                                class="flex justify-between items-center text-sm text-rose-600 font-bold border-b border-slate-100 pb-2 mb-2">
+                                <span>Diskon
+                                    ({{ $transaction->discount_type == 'percentage' ? $transaction->discount_value . '%' : 'Nominal' }})</span>
+                                <span>- Rp {{ number_format($transaction->discount_amount, 0, ',', '.') }}</span>
+                            </div>
+                        @endif
+
                         <div
                             class="flex justify-between items-center text-base font-black border-b border-slate-100 pb-2">
                             <span class="text-slate-900">GRAND TOTAL</span>
                             <span class="text-slate-900 text-lg">Rp
                                 {{ number_format($transaction->total_amount, 0, ',', '.') }}</span>
                         </div>
+
                         <div class="flex justify-between items-center text-slate-600 pt-1">
                             <span>Jumlah Tunai / Bayar</span>
                             <span class="font-medium">Rp
@@ -172,6 +195,7 @@
                     </div>
                 @endif
 
+                <!-- Footer Struk -->
                 <div class="text-center text-slate-400 text-xs mt-8 pt-4 border-t border-dashed border-slate-200">
                     @if (request('type') == 'checker')
                         <p class="font-bold text-slate-600 tracking-wider">[ RE-CHECK SEBELUM SERVED ]</p>
@@ -187,6 +211,7 @@
         </div>
     </div>
 
+    <!-- Script Cetak -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
@@ -195,6 +220,7 @@
         });
     </script>
 
+    <!-- Style Print -->
     <style media="print">
         body * {
             visibility: hidden;
