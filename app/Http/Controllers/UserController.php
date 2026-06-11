@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use App\Models\ActivityLog;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -15,6 +16,26 @@ class UserController extends Controller
     {
         $users = User::with('roles')->paginate(10);
         return view('users.index', compact('users'));
+    }
+
+    public function kickSession($id)
+    {
+        // Opsional: Pastikan yang mengakses ini adalah admin
+        if (!auth()->user()->hasPermissionTo('manage users')) {
+            abort(403);
+        }
+
+        // Menghapus semua sesi aktif milik user tersebut dari database
+        DB::table('sessions')->where('user_id', $id)->delete();
+
+        DB::table('activity_logs')->insert([
+            'user_id' => $kickedUser->id,
+            'action' => 'Kick Session',
+            'description' => 'Sesi login ' . $kickedUser->name . ' telah di-reset secara paksa oleh Admin (' . auth()->user()->name . ').',
+            'created_at' => now(),
+        ]);
+
+        return back()->with('success', 'Sesi perangkat berhasil direset. User tersebut sekarang bisa login kembali.');
     }
 
     public function create()

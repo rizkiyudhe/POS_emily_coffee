@@ -7,6 +7,7 @@ use App\Models\TransactionItem;
 use App\Models\Table;
 use App\Models\Product;
 use App\Models\ActivityLog;
+
 use App\Services\CartService;
 use App\Helpers\TransactionHelper;
 use Illuminate\Http\Request;
@@ -48,7 +49,7 @@ class TransactionController extends Controller
 
     public function create()
     {
-        $tables = Table::where('status', 'available')->get();
+        $tables = Table::orderBy('table_number', 'asc')->get();
         $cart = $this->cart->getCart();
         $total = $this->cart->getTotal();
 
@@ -195,9 +196,9 @@ class TransactionController extends Controller
             Product::find($id)->decrement('stock', $item['quantity']);
         }
 
-        if ($request->table_id && $request->order_type == 'dine_in') {
-            Table::find($request->table_id)->update(['status' => 'occupied']);
-        }
+        // if ($request->table_id && $request->order_type == 'dine_in') {
+        //     Table::find($request->table_id)->update(['status' => 'occupied']);
+        // }
 
         ActivityLog::create([
             'user_id'     => $user->id,

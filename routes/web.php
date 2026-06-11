@@ -40,6 +40,8 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('users', UserController::class)->middleware('permission:manage users');
     Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password')->middleware('permission:manage users');
 
+    Route::post('/users/{id}/kick', [UserController::class, 'kickSession'])->name('users.kick');
+
     // Transactions (kasir & admin)
     Route::prefix('transactions')->name('transactions.')->group(function () {
         Route::get('/', [TransactionController::class, 'index'])->name('index')->middleware('permission:view transactions');

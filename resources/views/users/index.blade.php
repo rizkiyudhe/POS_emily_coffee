@@ -112,6 +112,23 @@
                                             </button>
                                         </form>
 
+                                        <form action="{{ route('users.kick', $user->id) }}" method="POST"
+                                            class="inline"
+                                            onsubmit="return confirm('Yakin ingin mereset sesi akun ini? Akun ini akan otomatis ter-logout dari semua perangkat.');">
+                                            @csrf
+                                            <button type="submit"
+                                                class="inline-flex items-center justify-center px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 text-xs font-bold rounded-xl transition"
+                                                title="Reset Sesi Perangkat">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                    viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+                                                    class="w-4 h-4 mr-1">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                                                </svg>
+                                                Kick
+                                            </button>
+                                        </form>
+
                                     </td>
                                 </tr>
                             @empty
