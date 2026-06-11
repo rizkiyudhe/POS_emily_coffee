@@ -42,43 +42,45 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/users/{id}/kick', [UserController::class, 'kickSession'])->name('users.kick');
 
-    // Transactions (kasir & admin)
-    Route::prefix('transactions')->name('transactions.')->group(function () {
-        Route::get('/', [TransactionController::class, 'index'])->name('index')->middleware('permission:view transactions');
-        Route::get('/create', [TransactionController::class, 'create'])->name('create')->middleware('permission:create transactions');
-        Route::post('/add-to-cart', [TransactionController::class, 'addToCart'])->name('add-to-cart')->middleware('permission:create transactions');
-        Route::post('/update-cart', [TransactionController::class, 'updateCart'])->name('update-cart')->middleware('permission:create transactions');
-        Route::delete('/remove-from-cart/{productId}', [TransactionController::class, 'removeFromCart'])->name('remove-from-cart')->middleware('permission:create transactions');
-        Route::get('/cart-data', [TransactionController::class, 'cartData'])->name('cart-data')->middleware('permission:create transactions');
-        Route::post('/store', [TransactionController::class, 'store'])->name('store')->middleware('permission:create transactions');
-        Route::get('/receipt/{transaction}', [TransactionController::class, 'receipt'])->name('receipt')->middleware('permission:view transactions');
-
-        // Perbaikan di baris ini (reprint-checker diubah menjadi reprintChecker):
-        Route::post('/reprint-customer/{transaction}', [TransactionController::class, 'reprintCustomer'])->name('reprint-customer')->middleware('permission:reprint receipt');
-        Route::post('/reprint-checker/{transaction}', [TransactionController::class, 'reprintChecker'])->name('reprint-checker')->middleware('permission:reprint kot');
-        Route::post('/reprint-kitchen/{transaction}', [TransactionController::class, 'reprintKitchen'])->name('reprint-kitchen')->middleware('permission:reprint kot');
-
-        Route::post('/{transaction}/void', [TransactionController::class, 'void'])->name('void')->middleware('permission:void transactions');
-    });
-
-    Route::post('/transactions/reprint-customer/{transaction}', [TransactionController::class, 'reprintCustomer'])->name('transactions.reprint-customer');
-    Route::post('/transactions/reprint-checker/{transaction}', [TransactionController::class, 'reprintChecker'])->name('transactions.reprint-checker');
-    Route::post('/transactions/reprint-kitchen/{transaction}', [TransactionController::class, 'reprintKitchen'])->name('transactions.reprint-kitchen');
-
-    // Reports (hanya admin)
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index')->middleware('permission:view reports');
+    Route::get('/reports/products', [ReportController::class, 'productReport'])->name('reports.product'); // Laporan Produk
     Route::post('/reports/generate', [ReportController::class, 'generate'])->name('reports.generate')->middleware('permission:view reports');
+    Route::get('/reports/voids', [ReportController::class, 'voidReport'])->name('reports.void'); // Laporan Void
 
-    // Activity Logs (hanya admin)
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index')->middleware('permission:view logs');
 
     Route::get('/settings', [SettingController::class, 'index'])->name('settings.index')->middleware('permission:manage settings');
     Route::post('/settings', [SettingController::class, 'update'])->name('settings.update')->middleware('permission:manage settings');
 
-    // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// Transactions (kasir & admin)
+Route::prefix('transactions')->name('transactions.')->group(function () {
+    Route::get('/', [TransactionController::class, 'index'])->name('index')->middleware('permission:view transactions');
+    Route::get('/create', [TransactionController::class, 'create'])->name('create')->middleware('permission:create transactions');
+    Route::post('/add-to-cart', [TransactionController::class, 'addToCart'])->name('add-to-cart')->middleware('permission:create transactions');
+    Route::post('/update-cart', [TransactionController::class, 'updateCart'])->name('update-cart')->middleware('permission:create transactions');
+    Route::delete('/remove-from-cart/{productId}', [TransactionController::class, 'removeFromCart'])->name('remove-from-cart')->middleware('permission:create transactions');
+    Route::get('/cart-data', [TransactionController::class, 'cartData'])->name('cart-data')->middleware('permission:create transactions');
+    Route::post('/store', [TransactionController::class, 'store'])->name('store')->middleware('permission:create transactions');
+    Route::get('/receipt/{transaction}', [TransactionController::class, 'receipt'])->name('receipt')->middleware('permission:view transactions');
+
+    // Perbaikan di baris ini (reprint-checker diubah menjadi reprintChecker):
+    Route::post('/reprint-customer/{transaction}', [TransactionController::class, 'reprintCustomer'])->name('reprint-customer')->middleware('permission:reprint receipt');
+    Route::post('/reprint-checker/{transaction}', [TransactionController::class, 'reprintChecker'])->name('reprint-checker')->middleware('permission:reprint kot');
+    Route::post('/reprint-kitchen/{transaction}', [TransactionController::class, 'reprintKitchen'])->name('reprint-kitchen')->middleware('permission:reprint kot');
+
+    Route::post('/{transaction}/void', [TransactionController::class, 'void'])->name('void')->middleware('permission:void transactions');
+
+    Route::get('/reports/sales', [ReportController::class, 'generate'])->name('reports.index'); // Laporan Omzet
+
+
+    Route::post('/transactions/reprint-customer/{transaction}', [TransactionController::class, 'reprintCustomer'])->name('transactions.reprint-customer');
+    Route::post('/transactions/reprint-checker/{transaction}', [TransactionController::class, 'reprintChecker'])->name('transactions.reprint-checker');
+    Route::post('/transactions/reprint-kitchen/{transaction}', [TransactionController::class, 'reprintKitchen'])->name('transactions.reprint-kitchen');
 });
 
 require __DIR__ . '/auth.php';

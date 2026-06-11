@@ -1,9 +1,20 @@
+@php
+    $store = \App\Models\StoreSetting::first();
+    $storeName = $store->name ?? 'Emily Coffee';
+@endphp
+
 <div x-data="{ sidebarOpen: false }" class="relative">
+    <!-- HEADER MOBILE -->
     <header
         class="flex items-center justify-between lg:hidden bg-slate-50 border-b border-slate-200 px-6 py-4 shadow-sm z-40 relative">
-        <div class="flex items-center gap-2">
-            <span class="text-xl">☕</span>
-            <span class="font-bold text-slate-800 tracking-tight">Emily Coffee</span>
+        <div class="flex items-center gap-2.5">
+            @if ($store && $store->logo)
+                <img src="{{ asset('storage/' . $store->logo) }}" alt="Logo"
+                    class="h-8 w-8 object-cover rounded-lg shadow-sm">
+            @else
+                <span class="text-xl">☕</span>
+            @endif
+            <span class="font-bold text-slate-800 tracking-tight">{{ $storeName }}</span>
         </div>
         <button @click="sidebarOpen = !sidebarOpen" class="text-slate-500 hover:text-slate-800 focus:outline-none">
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -15,17 +26,25 @@
         </button>
     </header>
 
+    <!-- OVERLAY BLUR MOBILE -->
     <div x-show="sidebarOpen" @click="sidebarOpen = false" x-cloak
         class="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-xs lg:hidden transition-opacity duration-300"></div>
 
+    <!-- SIDEBAR UTAMA -->
     <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
         class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-50 text-slate-600 border-r border-slate-200 flex flex-col justify-between transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen lg:z-auto shrink-0">
 
         <div>
+            <!-- LOGO & BRANDING SIDEBAR -->
             <div class="flex items-center justify-between px-6 py-5 border-b border-slate-200 bg-slate-100/60">
                 <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 group">
-                    <span class="text-xl group-hover:scale-105 transition-transform">☕</span>
-                    <span class="font-bold text-slate-800 text-base tracking-wide">Emily Coffee</span>
+                    @if ($store && $store->logo)
+                        <img src="{{ asset('storage/' . $store->logo) }}" alt="Logo"
+                            class="h-8 w-8 object-cover rounded-lg shadow-sm group-hover:scale-105 transition-transform">
+                    @else
+                        <span class="text-xl group-hover:scale-105 transition-transform">☕</span>
+                    @endif
+                    <span class="font-bold text-slate-800 text-base tracking-wide">{{ $storeName }}</span>
                 </a>
                 <button @click="sidebarOpen = false" class="text-slate-400 hover:text-slate-600 lg:hidden">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -34,8 +53,10 @@
                 </button>
             </div>
 
+            <!-- MENU NAVIGASI -->
             <nav class="px-3 py-6 space-y-6 overflow-y-auto max-h-[calc(100vh-140px)] no-scrollbar">
 
+                <!-- Dashboard -->
                 <div class="space-y-0.5">
                     <a href="{{ route('dashboard') }}"
                         class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {{ request()->routeIs('dashboard') ? 'bg-white text-slate-900 font-bold shadow-xs border border-slate-200/60' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
@@ -48,6 +69,7 @@
                     </a>
                 </div>
 
+                <!-- POS KASIR -->
                 @if (auth()->user()->can('create transactions') || auth()->user()->can('view transactions'))
                     <div class="space-y-1">
                         <label class="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">POS
@@ -78,6 +100,7 @@
                     </div>
                 @endif
 
+                <!-- DATA MASTER -->
                 @if (auth()->user()->can('manage categories') ||
                         auth()->user()->can('manage products') ||
                         auth()->user()->can('manage tables'))
@@ -124,6 +147,7 @@
                     </div>
                 @endif
 
+                <!-- BACKOFFICE & REPORTS -->
                 @if (auth()->user()->can('manage users') ||
                         auth()->user()->can('view reports') ||
                         auth()->user()->can('view logs') ||
@@ -145,14 +169,37 @@
                         @endcan
 
                         @can('view reports')
+                            <!-- Laporan Omzet -->
                             <a href="{{ route('reports.index') }}"
-                                class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {{ request()->routeIs('reports.*') ? 'bg-white text-slate-900 font-bold shadow-xs border border-slate-200/60' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                                class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {{ request()->routeIs('reports.index') ? 'bg-white text-slate-900 font-bold shadow-xs border border-slate-200/60' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
                                 <svg class="w-4 h-4 shrink-0 opacity-75" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round"
                                         d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
                                 </svg>
                                 Laporan Omzet
+                            </a>
+
+                            <!-- Laporan Produk -->
+                            <a href="{{ route('reports.product') }}"
+                                class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {{ request()->routeIs('reports.product') ? 'bg-white text-slate-900 font-bold shadow-xs border border-slate-200/60' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                                <svg class="w-4 h-4 shrink-0 opacity-75" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .414.336.75.75.75z" />
+                                </svg>
+                                Laporan Produk
+                            </a>
+
+                            <!-- Laporan Void -->
+                            <a href="{{ route('reports.void') }}"
+                                class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 {{ request()->routeIs('reports.void') ? 'bg-white text-slate-900 font-bold shadow-xs border border-slate-200/60' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                                <svg class="w-4 h-4 shrink-0 opacity-75" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                </svg>
+                                Laporan Void
                             </a>
                         @endcan
 
@@ -184,6 +231,7 @@
             </nav>
         </div>
 
+        <!-- FOOTER SIDEBAR (PROFIL USER) -->
         <div class="p-4 border-t border-slate-200 bg-slate-100/60 flex items-center justify-between">
             <a href="{{ route('profile.edit') }}"
                 class="flex items-center gap-2.5 hover:bg-white p-1.5 rounded-xl transition shadow-xs group min-w-0 flex-1 mr-2 border border-transparent hover:border-slate-200">
@@ -193,7 +241,7 @@
                 </div>
                 <div class="truncate">
                     <div class="text-xs font-bold text-slate-700 truncate">{{ Auth::user()->name }}</div>
-                    <div class="text-[10px] text-slate-400 font-medium truncate">Kasir Aktif</div>
+                    <div class="text-[10px] text-slate-400 font-medium truncate">Akses Aktif</div>
                 </div>
             </a>
 
@@ -215,14 +263,11 @@
     <style>
         .no-scrollbar::-webkit-scrollbar {
             display: none;
-            /* Menyembunyikan di Google Chrome, Safari, dan Opera */
         }
 
         .no-scrollbar {
             -ms-overflow-style: none;
-            /* Menyembunyikan di Internet Explorer dan Edge */
             scrollbar-width: none;
-            /* Menyembunyikan di Firefox */
         }
     </style>
 </div>

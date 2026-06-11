@@ -39,9 +39,9 @@ class PrintService
         try {
             $this->printer->initialize();
             $this->printer->setJustification(Printer::JUSTIFY_CENTER);
-            $this->printer->text("COFFEE SHOP POS\n");
-            $this->printer->text("Jl. Contoh No. 123\n");
-            $this->printer->text("Telp: 08123456789\n");
+            $this->printer->text(strtoupper(store_setting('store_name', 'NAMA TOKO')) . "\n");
+            $this->printer->text(store_setting('store_address', 'Alamat belum diatur') . "\n");
+            $this->printer->text("Telp: " . store_setting('store_phone', '-') . "\n");
             $this->printer->text("==============================\n");
             $this->printer->setJustification(Printer::JUSTIFY_LEFT);
             $this->printer->text("Invoice: {$transaction->invoice_number}\n");
